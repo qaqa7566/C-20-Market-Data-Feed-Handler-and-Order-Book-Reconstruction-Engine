@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    name: ${{ matrix.compiler }} / ${{ matrix.preset }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [g++, clang++]
+        preset: [debug-sanitizers, release]
+        include:
+          - preset: debug-sanitizers
+            build_type: Debug
+            sanitizers: "ON"
+            warnings_as_errors: "OFF"
+          - preset: release
+            build_type: Release
+            sanitizers: "OFF"
+            warnings_as_errors: "ON"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build clang
+
+      - name: Configure
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} \
+            -DMDFH_ENABLE_ASAN_UBSAN=${{ matrix.sanitizers }} \
+            -DMDFH_WARNINGS_AS_ERRORS=${{ matrix.warnings_as_errors }} \
+            -DMDFH_BUILD_TESTS=ON -DMDFH_BUILD_BENCHMARKS=ON -DMDFH_BUILD_APPS=ON
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Test
+        working-directory: build
+        run: ctest --output-on-failure --parallel 2
+
+      - name: Smoke-run benchmark (Release only)
+        if: matrix.preset == 'release'
+        run: ./build/bin/mdfh_benchmark --messages 500000 --symbols 8 --seed 1

@@ -1,0 +1,19 @@
+{
+  "messages": 2000000,
+  "symbols": 16,
+  "seed": 1,
+  "malformed": 0,
+  "single_threaded": {
+    "wall_seconds": 1.188374,
+    "throughput_msg_per_s": 1682972.250,
+    "avg_latency_ns": 564.568,
+    "p50_ns": 500, "p95_ns": 987, "p99_ns": 1241,
+    "min_ns": 49, "max_ns": 3200933
+  },
+  "concurrent": {
+    "wall_seconds": 1.707670,
+    "throughput_msg_per_s": 1171186.283,
+    "analytics_events": 62512,
+    "deterministic": true
+  }
+}
